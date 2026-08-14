@@ -554,7 +554,7 @@
   const brandMarkup = () => `
     <a href="#home" class="brand" data-route="home" aria-label="Trumpet Nation home" translate="no">
       <span class="brand-mark" aria-hidden="true">
-        <img src="assets/logo-384.png" alt="" width="384" height="384" decoding="async" />
+        <img src="assets/logo-512.png" alt="" width="512" height="512" decoding="async" />
       </span>
       <span class="brand-beta">Beta</span>
     </a>`;

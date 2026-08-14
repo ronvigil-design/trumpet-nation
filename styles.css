@@ -5791,3 +5791,99 @@ body {
 
 /* Cards are leaves laid on that sheet, so they stay opaque — the watermark
    reads in the margins and gutters, never behind running text. */
+
+/* --- Onboarding board: the seal fills the cover ------------------- */
+
+/* The emblem is the whole point of this panel, so it takes the open space
+   between the struck frame's edges and the copy sits beneath it — the
+   arrangement of a book cover rather than a page header. */
+
+.onboarding-story {
+  justify-content: flex-end;
+  gap: clamp(18px, 3vh, 40px);
+}
+
+.onboarding .brand {
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 0;
+  gap: 14px;
+}
+
+/* Sized by BOTH axes. The panel is clipped at 100vh, so constraining the
+   seal by width alone pushed the headline off the cover on short screens.
+   Letting the image scale under a max-width and a max-height means it
+   yields to the copy instead of overrunning it. */
+.onboarding .brand-mark {
+  display: flex;
+  width: auto;
+  height: auto;
+  max-width: min(430px, 78%);
+  max-height: 100%;
+  min-height: 0;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 3px 6px rgba(46, 10, 17, 0.55));
+}
+
+.onboarding .brand-mark img {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.onboarding .brand-beta {
+  align-self: center;
+  color: rgba(240, 218, 154, 0.6);
+  font-size: 0.64rem;
+  letter-spacing: 0.34em;
+  text-indent: 0.34em;
+}
+
+.onboarding-copy {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+/* Give the copy a floor so the seal can never squeeze it out. */
+.onboarding-copy,
+.onboarding-principles {
+  flex: 0 0 auto;
+}
+
+/* --- The cover fits the screen ------------------------------------ */
+
+/* The story panel was 1284px tall in a 720px viewport, so the headline
+   always fell below the fold — the enlarged seal only made that visible.
+   Pinning it to the viewport and letting the form column scroll past keeps
+   the cover whole: seal centred, copy on the baseline, nothing clipped. */
+
+.onboarding-story {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+}
+
+/* Under a laptop's height the three principles are the first thing to go —
+   they support the headline rather than carrying it, and the seal and the
+   promise are what this panel exists to show. */
+@media (max-height: 880px) {
+  .onboarding-principles {
+    display: none;
+  }
+
+  .onboarding-copy h1 {
+    font-size: clamp(2.1rem, 3.2vw, 3rem);
+  }
+
+  .onboarding-copy > p {
+    font-size: 0.95rem;
+  }
+}

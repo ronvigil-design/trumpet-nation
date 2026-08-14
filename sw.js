@@ -11,7 +11,7 @@
  * usable offline.
  */
 
-const VERSION = "v5";
+const VERSION = "v6";
 const SHELL_CACHE = `trumpet-shell-${VERSION}`;
 const ASSET_CACHE = `trumpet-assets-${VERSION}`;
 const KEEP = new Set([SHELL_CACHE, ASSET_CACHE]);

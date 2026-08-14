@@ -35,7 +35,7 @@ if (!js.includes(swGuard)) throw new Error("Service worker guard not found — u
 
 // The single-file build has no assets directory beside it, so any image the
 // app references has to travel inside the file as a data URI.
-const logo = await readFile(resolve(root, "assets/logo-384.png"));
+const logo = await readFile(resolve(root, "assets/logo-512.png"));
 const logoUri = `data:image/png;base64,${logo.toString("base64")}`;
 
 const texture = await readFile(resolve(root, "assets/texture-scripture.png"));
@@ -43,7 +43,7 @@ const textureUri = `data:image/png;base64,${texture.toString("base64")}`;
 
 const script = js
   .replace(swGuard, "if (false) {")
-  .replaceAll("assets/logo-384.png", logoUri)
+  .replaceAll("assets/logo-512.png", logoUri)
   // A literal </script> anywhere in a string would close the inline tag early.
   .replace(/<\/script/gi, "<\\/script");
 
