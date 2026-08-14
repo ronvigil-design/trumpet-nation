@@ -23,7 +23,7 @@ import pnglib  # noqa: E402
 
 INK = (0x2E, 0x1C, 0x10)   # warm manuscript ink, not black
 FLOOR = 42                 # below this the source is haze, not stroke
-CEILING = 40               # peak opacity of the finished watermark
+CEILING = 82               # peak opacity of the finished watermark
 
 
 def main():
