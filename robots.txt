@@ -1,0 +1,9 @@
+# Trumpet is a prototype: the data is fictional, partner verification is not
+# real, and the AI answers are canned. Until that changes, keep it out of
+# search — someone looking for prayer or crisis support should not reach a
+# demo by accident.
+#
+# To launch: delete this file and remove the robots meta tag from index.html.
+
+User-agent: *
+Disallow: /
