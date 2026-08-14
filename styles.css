@@ -5887,3 +5887,20 @@ body {
     font-size: 0.95rem;
   }
 }
+
+/* --- Cover corrections -------------------------------------------- */
+
+/* The square outline on the cover was an accident: the base rule drew a
+   decorative CIRCLE here (border-radius 50%), and the struck-frame override
+   changed the radius to 2px while leaving that 1px border in place. The
+   result was a hard rectangle around the seal. The frame belongs on the
+   rail, not on the cover — the emblem is the mark here. */
+.onboarding-story::after {
+  content: none;
+}
+
+/* Seal down 30% (430 -> 300, 78% -> 55%) so it sits on the board rather
+   than filling it edge to edge. */
+.onboarding .brand-mark {
+  max-width: min(300px, 55%);
+}
