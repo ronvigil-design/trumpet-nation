@@ -5904,3 +5904,14 @@ body {
 .onboarding .brand-mark {
   max-width: min(300px, 55%);
 }
+
+/* The same accident as the cover, on the hero boards: the base rules drew
+   large decorative circles at ::after, and the struck-frame override
+   changed their radius while leaving the 1px border behind — a rectangle
+   outlined inside each panel. The frame reads correctly on the rail, where
+   it is drawn with inset shadow alone and no border, so it stays there. */
+.signal-hero::after,
+.prayer-hero::after,
+.give-hero::after {
+  content: none;
+}
