@@ -178,6 +178,41 @@ for (const [prompt, id, resource] of crisisCases) {
 const mixed = window.TrumpetDemo.__test.buildTrumpetResponse('I have been anxious about work and lately I want to die');
 assert(mixed.includes('data-crisis="self-harm"'), 'Crisis detection should outrank topic matching');
 
+// A child disclosure must not be swallowed by the adult abuse route. These two
+// patterns overlap ("being abused" is a substring of the child wording), so the
+// order of CRISIS_ROUTES decides the outcome — and getting it wrong sent a
+// child-abuse disclosure to the domestic-violence hotline instead of Childhelp.
+const routingCases = [
+  ['my child is being abused', 'child-safety'],
+  ['I think a child is being abused', 'child-safety'],
+  ['my son is being abused', 'child-safety'],
+  ['my daughter was raped', 'child-safety'],
+  ['my kid was sexually assaulted', 'child-safety'],
+  ['someone is hurting my child', 'child-safety'],
+  ['my husband hits me and I am afraid', 'abuse'],
+  ['I am being abused by my partner', 'abuse'],
+  ['domestic violence at home', 'abuse'],
+  ['I was raped', 'abuse'],
+  ['afraid of my wife', 'abuse'],
+];
+for (const [prompt, expected] of routingCases) {
+  const response = window.TrumpetDemo.__test.buildTrumpetResponse(prompt);
+  assert(
+    response.includes(`data-crisis="${expected}"`),
+    `"${prompt}" must route to ${expected}, not whichever pattern is listed first`,
+  );
+}
+
+// The matched route has to carry the resource that fits the disclosure.
+const childDisclosure = window.TrumpetDemo.__test.buildTrumpetResponse('my child is being abused');
+assert(childDisclosure.includes('1-800-422-4453'), 'Child disclosure should surface Childhelp');
+assert(childDisclosure.includes('Mandatory reporting'), 'Child disclosure should surface the reporting duty');
+assert(!childDisclosure.includes('1-800-799-7233'), 'Child disclosure should not surface the adult DV hotline');
+assert(
+  window.TrumpetDemo.__test.buildTrumpetResponse('I was raped').includes('1-800-656-4673'),
+  'Sexual assault should surface RAINN, not only the DV hotline',
+);
+
 // A full re-render replaces the tree, which drops focus to <body>. A keyboard
 // or screen-reader user who activates a control must land back on that control
 // rather than at the top of the page.
@@ -283,7 +318,68 @@ assert.strictEqual(window.TrumpetDemo.state.modal, null, 'Ordinary requests shou
   assert(roots.app.innerHTML.includes('Closest to what you asked'), 'Serve should lead with what the question was about');
   assert(roots.app.innerHTML.includes('You asked'), 'Serve should say why the person is here');
 
-  window.TrumpetDemo.__test.handleAction('toggle-opportunity', { dataset: { id: 'serve-meals' } });
+  // "Private journal — only me" has to mean that. Collapsing it into the circle
+// scope put entries onto the community wall and the Home rail, labelled
+// "Circle", which is the opposite of what the composer promised.
+{
+  const before = window.TrumpetDemo.state.prayers.length;
+  submitForm('prayer-form', { text: 'a private thing I am carrying', scope: 'Private journal' });
+  const entry = window.TrumpetDemo.state.prayers[0];
+  assert.strictEqual(window.TrumpetDemo.state.prayers.length, before + 1, 'Journal entry should be saved');
+  assert.strictEqual(entry.status, 'journal', 'Private journal needs its own status, not the circle one');
+
+  window.TrumpetDemo.navigate('prayer');
+  window.TrumpetDemo.state.prayerFilter = 'All';
+  window.TrumpetDemo.__test.render();
+  assert(
+    !roots.app.innerHTML.includes('a private thing I am carrying'),
+    'A private journal entry must not appear on the community prayer wall',
+  );
+
+  window.TrumpetDemo.navigate('home');
+  assert(
+    !roots.app.innerHTML.includes('a private thing I am carrying'),
+    'A private journal entry must not appear in the Home prayer rail',
+  );
+
+  window.TrumpetDemo.state.prayerFilter = 'My circles';
+  window.TrumpetDemo.navigate('prayer');
+  assert(
+    roots.app.innerHTML.includes('a private thing I am carrying'),
+    'The person must still be able to reach their own journal entry',
+  );
+  window.TrumpetDemo.state.prayerFilter = 'All';
+}
+
+// Returning from the care dialog must preserve what was written AND how it was
+// to be shared. Anonymity was silently dropped, which is the one setting a
+// person in crisis is most likely to have chosen deliberately.
+{
+  submitForm('prayer-form', { text: 'I want to kill myself', scope: 'Community', anonymous: 'on' });
+  assert.strictEqual(window.TrumpetDemo.state.modal?.type, 'care', 'Crisis text should open the care dialog');
+  window.TrumpetDemo.__test.handleAction('close-modal', { dataset: {} });
+  assert.strictEqual(window.TrumpetDemo.state.modal?.type, 'prayer', 'Going back should return to the composer');
+  assert(roots.app.innerHTML.includes('checked'), 'Anonymity should survive the round trip');
+  window.TrumpetDemo.__test.handleAction('close-modal', { dataset: {} });
+}
+
+// The same protection has to cover the community composer, whose draft used to
+// be discarded because only the prayer branch was handled.
+{
+  const before = window.TrumpetDemo.state.posts.length;
+  submitForm('post-form', { content: 'my child is being abused and I am scared' });
+  assert.strictEqual(window.TrumpetDemo.state.modal?.type, 'care', 'Community posts should be checked too');
+  window.TrumpetDemo.__test.handleAction('close-modal', { dataset: {} });
+  assert.strictEqual(window.TrumpetDemo.state.posts.length, before, 'Nothing should post on going back');
+  assert(
+    roots.app.innerHTML.includes('my child is being abused and I am scared'),
+    'Going back must not destroy the post the person just wrote',
+  );
+  window.TrumpetDemo.__test.handleAction('close-composer', { dataset: {} });
+  assert.strictEqual(window.TrumpetDemo.state.pendingShare, null, 'Abandoning the composer clears the draft');
+}
+
+window.TrumpetDemo.__test.handleAction('toggle-opportunity', { dataset: { id: 'serve-meals' } });
   assert.strictEqual(journey.steps.at(-1).kind, 'committed', 'Committing should extend the thread');
 
   // Re-clicking the same suggestion should not stutter the thread.

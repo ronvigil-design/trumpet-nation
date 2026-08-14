@@ -850,7 +850,7 @@
 
   const renderHome = () => {
     const firstName = escapeHtml(state.profile.firstName || "Friend");
-    const todayPrayer = state.prayers.slice(0, 2);
+    const todayPrayer = state.prayers.filter((prayer) => prayer.status !== "journal").slice(0, 2);
     const nextOpportunity = OPPORTUNITIES[0];
     const shapingGoals = state.profile.goals.filter((goal) => railCardForGoal[goal]);
     const goalCount = state.profile.goals.length;
@@ -1343,23 +1343,30 @@
       ],
     },
     {
-      id: "abuse",
-      test: /\b(domestic (violence|abuse)|being abused|he (hits|beats|chokes) me|she (hits|beats|chokes) me|my (husband|wife|partner|boyfriend|girlfriend) (hits|hurts|beats|threatens) me|afraid of my (husband|wife|partner)|sexual(ly)? assault|raped|rape me)/i,
-      lead: "I'm sorry. What you're describing is not something you have to justify, minimize, or pray your way out of alone.",
-      resources: [
-        ["National DV Hotline", "Call <strong>1-800-799-7233</strong>, text <strong>START</strong> to <strong>88788</strong>, or chat at thehotline.org."],
-        ["Immediate danger", "If you are in danger right now, call <strong>911</strong>."],
-        ["Plan privately", "Consider using a device the other person cannot access, and clearing this conversation afterward."],
-      ],
-    },
-    {
+      /* Ordered ahead of `abuse` deliberately. detectCrisis returns the FIRST
+       * match, and the adult pattern's `being abused` is a substring of the
+       * child wording — so with the adult route first, "my child is being
+       * abused" surfaced the domestic-violence hotline and never reached
+       * Childhelp or the mandatory-reporting notice. A child disclosure has
+       * to win the race, not lose it by one array position. */
       id: "child-safety",
-      test: /\b(child (abuse|is being (hurt|abused))|someone is hurting my (child|kid|son|daughter)|hurting a child|abused as a child by)/i,
+      test: /\b((a |my |their |his |her )?(child|kid|son|daughter|grandchild|stepchild) ((is|was|got) )?(being )?(abused|molested|hurt|raped|sexually assaulted)|child (abuse|is being (hurt|abused))|someone is (hurting|abusing|touching) (my|a|their) (child|kid|son|daughter)|hurting a child|abused as a child by)/i,
       lead: "A child's safety comes before every other consideration here, including privacy or reputation.",
       resources: [
         ["Childhelp Hotline", "Call or text <strong>1-800-422-4453</strong> to speak with a counselor about a child's safety."],
         ["Immediate danger", "If a child is in danger right now, call <strong>911</strong>."],
         ["Mandatory reporting", "Many roles — including church staff and volunteers — carry a legal duty to report. Ask the hotline what applies to you."],
+      ],
+    },
+    {
+      id: "abuse",
+      test: /\b(domestic (violence|abuse)|being abused|he (hits|beats|chokes) me|she (hits|beats|chokes) me|my (husband|wife|partner|boyfriend|girlfriend) (hits|hurts|beats|threatens) me|afraid of my (husband|wife|partner)|sexual(ly)? assault|raped|rape me)/i,
+      lead: "I'm sorry. What you're describing is not something you have to justify, minimize, or pray your way out of alone.",
+      resources: [
+        ["National DV Hotline", "Call <strong>1-800-799-7233</strong>, text <strong>START</strong> to <strong>88788</strong>, or chat at thehotline.org."],
+        ["Sexual assault", "RAINN's National Sexual Assault Hotline: <strong>1-800-656-4673</strong>, free and confidential, 24/7."],
+        ["Immediate danger", "If you are in danger right now, call <strong>911</strong>."],
+        ["Plan privately", "Consider using a device the other person cannot access, and clearing this conversation afterward."],
       ],
     },
     {
@@ -2029,7 +2036,7 @@
               state.composerOpen
                 ? `<form class="composer-expanded" id="post-form">
                     <label class="visually-hidden" for="post-content">Post content</label>
-                    <textarea class="textarea" id="post-content" name="content" placeholder="What would be helpful to share?" maxlength="700" required></textarea>
+                    <textarea class="textarea" id="post-content" name="content" placeholder="What would be helpful to share?" maxlength="700" required>${escapeHtml(state.pendingShare?.kind === "post" ? state.pendingShare.content : "")}</textarea>
                     <div class="composer-toolbar">
                       <div class="composer-tools">
                         <button type="button" data-action="composer-tool" data-value="prayer">${icon("hands")} Prayer</button>
@@ -2087,35 +2094,48 @@
 
   const renderPrayerCard = (prayer) => {
     const prayed = state.prayedRequests.has(prayer.id);
-    const className = prayer.status === "private" ? "private" : prayer.status === "answered" ? "answered" : "";
+    const isJournal = prayer.status === "journal";
+    const className = prayer.status === "answered" ? "answered" : prayer.status === "active" ? "" : "private";
     return `
       <article class="prayer-card ${className}">
         <div class="prayer-card-head">
           ${avatarMarkup(prayer)}
           <div><strong>${escapeHtml(prayer.author)}</strong><small>${escapeHtml(prayer.time)} · ${escapeHtml(prayer.scope)}</small></div>
-          <span class="pill ${prayer.status === "answered" ? "" : prayer.status === "private" ? "pill-gold" : ""}">${
-            prayer.status === "answered" ? `${icon("check")} Answered` : prayer.status === "private" ? `${icon("lock")} Circle` : `${icon("globe")} Community`
+          <span class="pill ${prayer.status === "answered" || prayer.status === "active" ? "" : "pill-gold"}">${
+            prayer.status === "answered"
+              ? `${icon("check")} Answered`
+              : isJournal
+                ? `${icon("lock")} Private`
+                : prayer.status === "private"
+                  ? `${icon("lock")} Circle`
+                  : `${icon("globe")} Community`
           }</span>
         </div>
         <p>${escapeHtml(prayer.text)}</p>
-        <div class="prayer-card-foot">
+        ${
+          isJournal
+            ? `<div class="prayer-card-foot"><span class="subtle">${icon("lock")} Only you can see this entry.</span></div>`
+            : `<div class="prayer-card-foot">
           <div class="pray-count">
             <div class="stack-avatars"><span class="avatar avatar-teal">AM</span><span class="avatar avatar-gold">JL</span><span class="avatar avatar-sage">+${Math.max(0, prayer.count - 2)}</span></div>
             <span>${prayer.count + (prayed ? 1 : 0)} people prayed</span>
           </div>
           <button class="btn ${prayed ? "btn-soft" : "btn-primary"} btn-small" type="button" data-action="pray-request" data-id="${prayer.id}">${icon("hands")} ${prayed ? "Prayed" : "Pray now"}</button>
-        </div>
+        </div>`
+        }
       </article>`;
   };
 
   const renderPrayer = () => {
-    const filtered = state.prayerFilter === "All"
-      ? state.prayers
-      : state.prayers.filter((prayer) => {
-          if (state.prayerFilter === "Answered") return prayer.status === "answered";
-          if (state.prayerFilter === "My circles") return prayer.status === "private" || prayer.scope === "Group";
-          return prayer.status !== "private";
-        });
+    const filtered = state.prayers.filter((prayer) => {
+      if (state.prayerFilter === "Answered") return prayer.status === "answered";
+      if (state.prayerFilter === "My circles") {
+        return prayer.status === "private" || prayer.status === "journal" || prayer.scope === "Group";
+      }
+      if (state.prayerFilter === "Community") return prayer.status === "active" || prayer.status === "answered";
+      // "All" is still the community wall — a journal entry is not a post.
+      return prayer.status !== "journal";
+    });
     const progress = ((state.focusTotal - state.focusRemaining) / state.focusTotal) * 100;
     return `
       ${renderJourneyContext("prayer")}
@@ -2620,8 +2640,8 @@
         </label>
         <label class="setting-row" style="cursor:pointer">
           <span class="setting-copy"><strong>Post anonymously</strong><small>Your name and profile photo will not be shown.</small></span>
-          <input type="checkbox" name="anonymous" class="visually-hidden" />
-          <span class="toggle" data-checkbox-toggle><span class="visually-hidden">Anonymous setting</span></span>
+          <input type="checkbox" name="anonymous" class="visually-hidden" ${draft?.anonymous ? "checked" : ""} />
+          <span class="toggle ${draft?.anonymous ? "on" : ""}" data-checkbox-toggle><span class="visually-hidden">Anonymous setting</span></span>
         </label>
         <div class="onboarding-note">${icon("shield")}<span>Requests involving immediate danger, abuse, self-harm, or medical emergencies should also be shared with qualified local support.</span></div>
         <div class="modal-actions"><button class="btn btn-ghost" type="button" data-action="close-modal">Cancel</button><button class="btn btn-primary" type="submit">Share request</button></div>
@@ -3000,7 +3020,10 @@
       scope,
       text,
       count: 0,
-      status: scope === "Community" ? "active" : "private",
+      /* "Private journal", "Trusted circle" and "Community" are three states,
+       * not two. Collapsing the first two put entries a person marked
+       * "only me" onto the community wall, labelled "Circle". */
+      status: scope === "Community" ? "active" : scope === "Trusted circle" ? "private" : "journal",
     });
     storage.set("prayers", state.prayers);
     state.pendingShare = null;
@@ -3203,12 +3226,24 @@
         render();
         break;
       case "close-modal":
-        // Closing the care dialog returns to the composer with the text intact,
-        // rather than discarding what the person just wrote.
-        if (state.modal?.type === "care" && state.pendingShare?.kind === "prayer") {
-          state.modal = { type: "prayer" };
-          render();
-          break;
+        // Closing the care dialog returns the person to the composer they were
+        // using, with what they wrote intact. Making someone retype a sentence
+        // that cost them something to write is its own small cruelty — and the
+        // post branch used to do exactly that by falling through to the reset.
+        if (state.modal?.type === "care" && state.pendingShare) {
+          if (state.pendingShare.kind === "prayer") {
+            state.modal = { type: "prayer" };
+            render();
+            break;
+          }
+          if (state.pendingShare.kind === "post") {
+            state.modal = null;
+            state.composerOpen = true;
+            state.route = "community";
+            history.pushState(null, "", "#community");
+            render();
+            break;
+          }
         }
         state.modal = null;
         state.pendingShare = null;
@@ -3312,6 +3347,9 @@
         break;
       case "close-composer":
         state.composerOpen = false;
+        // Abandoning the composer abandons the held draft too, or it would
+        // reappear the next time the composer opened.
+        if (state.pendingShare?.kind === "post") state.pendingShare = null;
         render();
         break;
       case "community-filter":
