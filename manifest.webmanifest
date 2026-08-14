@@ -1,6 +1,6 @@
 {
   "id": "https://trumpetnation.com/",
-  "name": "Trumpet Nation — Faith for everyday life",
+  "name": "Trumpet Nation \u2014 Faith for everyday life",
   "short_name": "Trumpet",
   "description": "A faith-aligned AI and community app for daily guidance, prayer, service, giving, and belonging.",
   "start_url": "/#home",
@@ -9,7 +9,11 @@
   "background_color": "#eae0c8",
   "theme_color": "#5a1522",
   "orientation": "portrait-primary",
-  "categories": ["lifestyle", "social", "education"],
+  "categories": [
+    "lifestyle",
+    "social",
+    "education"
+  ],
   "icons": [
     {
       "src": "/assets/logo-192.png",
@@ -21,12 +25,6 @@
       "src": "/assets/logo-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/assets/favicon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
       "purpose": "any"
     }
   ]

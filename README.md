@@ -243,7 +243,9 @@ The UI is intentionally structured for a staged backend build:
 - `app.js` — data, state, views, interactions, persistence, and demo AI behavior
 - `manifest.webmanifest` — installable app metadata
 - `sw.js` — offline app-shell cache (network-first for app code, cache-first for static assets)
-- `assets/favicon.svg` — Trumpet Nation mark
-- `assets/icon-192.png` and `assets/icon-512.png` — installable PWA icons
+- `assets/logo-*.png` — the emblem at each size, built from
+  `assets/logo-source-white.png` by `scripts/build-logo.py`
+- `assets/texture-scripture.png` — the page watermark, built from
+  `assets/texture-scripture-source.png` by `scripts/build-texture.py`
 - `qa/test_logic.js` — deterministic interaction journey
 - `qa/validate_assets.py` — HTML, CSS, manifest, and asset checks

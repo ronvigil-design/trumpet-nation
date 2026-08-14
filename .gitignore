@@ -3,3 +3,5 @@ node_modules/
 
 # Generated: rebuild with `node scripts/export-standalone.mjs`
 dist/
+__pycache__/
+*.pyc
